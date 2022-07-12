@@ -15,8 +15,9 @@ class Post(Base):
     text = Column(Integer)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now())
-    user_name = Column(String(100))
     password = Column(String(256))
+    author_id = Column(Integer, ForeignKey('author.id'))
+    author = relationship("Author", backref=backref("posts", order_by=id))
 
 
 class Comment(Base):
@@ -32,4 +33,29 @@ class Comment(Base):
     depth = Column(Integer, default=1, nullable=False)
     text = Column(String(1000), nullable=False)
     created_at = Column(DateTime, default=func.now(), nullable=False)
-    user_name = Column(String(100), nullable=False)
+    author_id = Column(Integer, ForeignKey('author.id'))
+    author = relationship("Author", backref=backref("comments", order_by=id))
+
+
+class Author(Base):
+    __tablename__ = "author"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(100), nullable=False)
+
+
+class Keyword(Base):
+    __tablename__ = "keyword"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    text = Column(String(1000), nullable=False)
+
+
+class AuthorKeyword(Base):
+    __tablename__ = "author_keyword"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    author_id = Column(Integer, ForeignKey("author.id"), nullable=False)
+    author = relationship("Author", backref=backref("keywords", order_by=id))
+    keyword_id = Column(Integer, ForeignKey("keyword.id"), nullable=False)
+    keyword = relationship("Keyword", backref=backref("authors", order_by=id))

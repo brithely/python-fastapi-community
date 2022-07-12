@@ -26,7 +26,17 @@ async def list_post(
 async def create_post(post: model.CreatePost, session: Session = Depends(get_session)):
     repo = repository.PostRepository(session)
     service = services.PostService(repo=repo)
-    return service.add(post)
+    try:
+        post = service.add(post)
+    except Exception:
+        raise
+    else:
+        return post
+    finally:
+        text = " ".join([post.title, post.text])
+        alarm_repo = repository.AlarmRepository(session)
+        alram_service = services.AlarmService(alarm_repo, text)
+        alram_service.send()
 
 
 @router.put("/posts/{post_id}", status_code=201, response_model=model.Post)
@@ -66,5 +76,15 @@ async def create_comment(
     post_id: int, comment: model.CreateComment, session: Session = Depends(get_session)
 ):
     repo = repository.CommentRepository(session)
-    service = services.CommentService(repo=repo)
-    return service.add(post_id, comment)
+    service = services.CommentService(repo)
+    try:
+        comment = service.add(post_id, comment)
+    except Exception:
+        raise
+    else:
+        return comment
+    finally:
+        text = comment.text
+        alarm_repo = repository.AlarmRepository(session)
+        alram_service = services.AlarmService(alarm_repo, text)
+        alram_service.send()
