@@ -1,4 +1,8 @@
-from app.community.adapters.repository import CommentRepository, PostRepository
+from app.community.adapters.repository import (
+    AlarmRepository,
+    CommentRepository,
+    PostRepository,
+)
 from app.community.domain import model
 
 
@@ -21,7 +25,6 @@ class PostService:
         return self._repo.get_list(q, page, page_limit)
 
     def add(self, post: model.CreatePost):
-        # TODO: Added Alarm Logic
         return self._repo.add(post)
 
     def update(self, post_id, post: model.UpdatePost):
@@ -69,3 +72,35 @@ class CommentService:
         else:
             depth = 1
         return self._repo.add(post_id, depth, comment)
+
+
+class AlarmService:
+    def __init__(self, repo: AlarmRepository, text):
+        self._text = text
+        self._repo = repo
+
+    def _get_keyword_id_list(self):
+        keyword_list = self._parsing_keywords_from_text()
+        return self._repo.get_list_keyword_id_by_keyword_list(keyword_list)
+
+    def _get_attended_alram_author_id_list(self, keyword_id_list):
+        return self._repo.get_list_author_id_by_keyword_id_list(keyword_id_list)
+
+    def _parsing_keywords_from_text(self) -> list[str]:
+        parsed_keywords = self._text.split()
+        return parsed_keywords
+
+    def _send_alarm_to_author_id_list(self, author_id_list):
+        """
+            중복 제거
+            실제로 푸시가 나가는 로직
+        """
+        author_id_list = set(author_id_list)
+        for author_id in author_id_list:
+            print(f"send alarm {author_id} done")
+        return True
+
+    def send(self):
+        keyword_id_list = self._get_keyword_id_list()
+        author_id_list = self._get_attended_alram_author_id_list(keyword_id_list)
+        return self._send_alarm_to_author_id_list(author_id_list)
