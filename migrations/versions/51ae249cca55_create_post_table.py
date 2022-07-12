@@ -18,13 +18,13 @@ depends_on = None
 def upgrade() -> None:
     op.create_table(
         "post",
-        sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
-        sa.Column("title", sa.String(100)),
-        sa.Column("text", sa.String(1000)),
-        sa.Column("user_name", sa.String(100)),
-        sa.Column("password", sa.String(256)),
-        sa.Column("created_at", sa.DateTime),
-        sa.Column("updated_at", sa.DateTime)
+        sa.Column("id", sa.Integer, primary_key=True, autoincrement=True, nullable=False),
+        sa.Column("title", sa.String(100), nullable=False),
+        sa.Column("text", sa.String(1000), nullable=False),
+        sa.Column("user_name", sa.String(100), nullable=False),
+        sa.Column("password", sa.String(256), nullable=False),
+        sa.Column("created_at", sa.DateTime, nullable=False),
+        sa.Column("updated_at", sa.DateTime, nullable=False)
     )
 
 def downgrade() -> None:

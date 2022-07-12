@@ -11,7 +11,12 @@ router = APIRouter()
 
 
 @router.get("/posts", status_code=200, response_model=list[model.Post])
-async def list_post(page: int = 1, page_limit: int = 10, q: Union[str, None] = None, session: Session = Depends(get_session)):
+async def list_post(
+    page: int = 1,
+    page_limit: int = 10,
+    q: Union[str, None] = None,
+    session: Session = Depends(get_session),
+):
     repo = repository.PostRepository(session)
     service = services.PostService(repo=repo)
     return service.get_list(q=q, page=page, page_limit=page_limit)
@@ -25,15 +30,41 @@ async def create_post(post: model.CreatePost, session: Session = Depends(get_ses
 
 
 @router.put("/posts/{post_id}", status_code=201, response_model=model.Post)
-def update_post(post: model.UpdatePost, post_id: int, session: Session = Depends(get_session)):
+def update_post(
+    post: model.UpdatePost, post_id: int, session: Session = Depends(get_session)
+):
     repo = repository.PostRepository(session)
     service = services.PostService(repo=repo)
     return service.update(post_id, post)
 
 
 @router.delete("/posts/{post_id}", status_code=204, response_model=None)
-def delete_post(post: model.DeletePost, post_id: int, session: Session = Depends(get_session)):
+def delete_post(
+    post: model.DeletePost, post_id: int, session: Session = Depends(get_session)
+):
     repo = repository.PostRepository(session)
     service = services.PostService(repo=repo)
     return service.delete(post_id, post)
 
+
+@router.get(
+    "/posts/{post_id}/comments", status_code=200, response_model=list[model.ListComment]
+)
+async def list_comment(
+    post_id: int,
+    page: int = 1,
+    page_limit: int = 10,
+    session: Session = Depends(get_session),
+):
+    repo = repository.CommentRepository(session)
+    service = services.CommentService(repo=repo)
+    return service.get_list(post_id, page, page_limit)
+
+
+@router.post("/posts/{post_id}/comments", status_code=201, response_model=model.Comment)
+async def create_comment(
+    post_id: int, comment: model.CreateComment, session: Session = Depends(get_session)
+):
+    repo = repository.CommentRepository(session)
+    service = services.CommentService(repo=repo)
+    return service.add(post_id, comment)
