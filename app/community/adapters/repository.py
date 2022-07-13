@@ -1,9 +1,9 @@
 import abc
-from datetime import datetime
 
 from app.community.adapters import orm
 from app.community.domain import model
 from sqlalchemy import or_, types
+from sqlalchemy.orm import aliased, joinedload
 from sqlalchemy.sql.expression import cast, text
 from sqlalchemy.sql.functions import concat
 
@@ -95,29 +95,34 @@ class CommentRepository(AuthorMixin, AbstractRepository):
         return query
 
     def get_list(self, post_id, page, page_limit) -> list[orm.Comment]:
-        query = (
+        hierarchy = (
             self.session.query(
-                orm.Comment,
-                cast(orm.Comment.id.label("path"), types.CHAR(1000)),
+                orm.Comment, cast(orm.Comment.id.label("path"), types.CHAR(1000))
             )
             .filter(orm.Comment.post_id == post_id)
-            .cte("cte", recursive=True)
+            .cte(name="hierarchy", recursive=True)
         )
-        re_query = self.session.query(
-            orm.Comment,
-            concat(query.c.path, ",", cast(orm.Comment.id, types.CHAR(1000))).label(
-                "path"
-            ),
+        children = aliased(orm.Comment, name="c")
+        hierarchy = hierarchy.union_all(
+            self.session.query(
+                children,
+                concat(
+                    hierarchy.c.path + "," + cast(children.id, types.CHAR(1000))
+                ).label("path"),
+            ).filter(children.parent_id == hierarchy.c.id)
         )
-        re_query = re_query.join(query, orm.Comment.parent_id == query.c.id)
-        recursive_q = query.union(re_query)
-        q = self.session.query(recursive_q)
-        q = q.order_by(text("path+1"), "path")
+        query = (
+            self.session.query(orm.Comment, hierarchy.c.path)
+            .select_entity_from(hierarchy)
+            .options(joinedload(orm.Comment.author))
+            .order_by(text(f"{hierarchy.c.path}+1"), hierarchy.c.path)
+        )
         if page_limit:
-            q = q.limit(page_limit)
+            query = query.limit(page_limit)
         if page:
-            q = q.offset((page - 1) * page_limit)
-        return q.all()
+            query = query.offset((page - 1) * page_limit)
+        query = [q[0] for q in query.all()]
+        return query
 
 
 class AlarmRepository(AbstractRepository):

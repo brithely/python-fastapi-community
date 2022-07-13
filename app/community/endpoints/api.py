@@ -5,7 +5,7 @@ from app.community.adapters import repository
 from app.community.database import get_session
 from app.community.domain import exception, model
 from app.community.service_layer import services
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 
 router = APIRouter()
@@ -109,7 +109,7 @@ def delete_post(
     except exception.NotExistPost:
         raise HTTPException(status_code=404, detail="없는 게시물 입니다.")
     else:
-        return post
+        return Response(status_code=204)
 
 
 @router.get(
@@ -130,12 +130,17 @@ async def list_comment(
 ):
     repo = repository.CommentRepository(session)
     service = services.CommentService(repo=repo)
+    post_repo = repository.PostRepository(session)
+    post_service = services.PostService(post_repo)
     try:
-        posts = service.get_list(post_id, page, page_limit)
+        post_service.get(post_id)
+        comments = service.get_list(post_id, page, page_limit)
     except (exception.InvalidPage, exception.InvalidPageLimit):
         raise HTTPException(status_code=400, detail="잘못된 페이지 입니다.")
+    except exception.NotExistPost:
+        raise HTTPException(status_code=400, detail="없는 게시물 입니다.")
     else:
-        return posts
+        return comments
 
 
 @router.post(

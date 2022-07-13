@@ -2,7 +2,7 @@ import hashlib
 from datetime import datetime
 from typing import Optional, Union
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, validator
 
 
 def hash_password(password: str) -> str:
@@ -21,7 +21,7 @@ class AuthorBase(BaseModel):
     author: Union[str, Author]
 
     @validator("author")
-    def author_to_user_name_str(cls, v, values, **kwargs):
+    def author_to_name_str(cls, v, values, **kwargs):
         return v.name if not isinstance(v, str) else v
 
 
@@ -96,8 +96,4 @@ class CreateComment(AuthorBase, BaseModel):
 
 
 class ListComment(Comment):
-    parent_id: int
     depth: int
-
-    class Config:
-        orm_mode = True
