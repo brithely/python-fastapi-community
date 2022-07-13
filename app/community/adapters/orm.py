@@ -1,4 +1,4 @@
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import backref, relationship
 from sqlalchemy.sql import func
@@ -7,20 +7,23 @@ Base = declarative_base()
 metadata = Base.metadata
 
 
-class Post(Base):
+class ContentMixin(object):
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), nullable=False)
+
+
+class Post(ContentMixin, Base):
     __tablename__ = "post"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     title = Column(String(255))
     text = Column(Integer)
-    created_at = Column(DateTime, default=func.now())
-    updated_at = Column(DateTime, default=func.now())
     password = Column(String(256))
-    author_id = Column(Integer, ForeignKey('author.id'))
+    author_id = Column(Integer, ForeignKey("author.id"))
     author = relationship("Author", backref=backref("posts", order_by=id))
 
 
-class Comment(Base):
+class Comment(ContentMixin, Base):
     __tablename__ = "comment"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -32,8 +35,7 @@ class Comment(Base):
     )
     depth = Column(Integer, default=1, nullable=False)
     text = Column(String(1000), nullable=False)
-    created_at = Column(DateTime, default=func.now(), nullable=False)
-    author_id = Column(Integer, ForeignKey('author.id'))
+    author_id = Column(Integer, ForeignKey("author.id"))
     author = relationship("Author", backref=backref("comments", order_by=id))
 
 
@@ -41,7 +43,7 @@ class Author(Base):
     __tablename__ = "author"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String(100), nullable=False)
+    name = Column(String(100), nullable=False, unique=True)
 
 
 class Keyword(Base):
@@ -53,6 +55,9 @@ class Keyword(Base):
 
 class AuthorKeyword(Base):
     __tablename__ = "author_keyword"
+    __table_args__ = (
+        UniqueConstraint("author_id", "keyword_id", name="author_keyword_unique"),
+    )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     author_id = Column(Integer, ForeignKey("author.id"), nullable=False)

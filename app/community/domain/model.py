@@ -2,7 +2,7 @@ import hashlib
 from datetime import datetime
 from typing import Optional, Union
 
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, Field, validator
 
 
 def hash_password(password: str) -> str:
@@ -10,90 +10,94 @@ def hash_password(password: str) -> str:
 
 
 class Author(BaseModel):
-    id: Optional[int]
-    name: Optional[str]
+    id: int
+    name: str
 
     class Config:
         orm_mode = True
 
 
-class PostBase(BaseModel):
-    title: Optional[str]
-    text: Optional[str]
+class AuthorBase(BaseModel):
+    author: Union[str, Author]
+
+    @validator("author")
+    def author_to_user_name_str(cls, v, values, **kwargs):
+        return v.name if not isinstance(v, str) else v
+
+
+class Post(BaseModel):
+    title: str
+    text: str
 
     class Config:
         orm_mode = True
 
 
 class PasswordPost(BaseModel):
-    password: Optional[str]
+    password: str
 
     # validators
     _hash_password = validator("password", allow_reuse=True)(hash_password)
 
 
-class CreatePost(PostBase, PasswordPost):
-    author: Union[str, Author]
-
-    @validator("author")
-    def author_to_user_name_str(cls, v, values, **kwargs):
-        return v.name if not isinstance(v, str) else v
-
-
-class UpdatePost(PostBase, PasswordPost):
+class CreatePost(
+    PasswordPost,
+    AuthorBase,
+    Post,
+):
     pass
+
+
+class UpdatePost(PasswordPost, Post):
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "title": "title",
+                "text": "Very Nice",
+                "password": "password",
+            }
+        }
 
 
 class DeletePost(PasswordPost):
     pass
 
 
-class Post(PostBase):
-    id: Optional[int]
-    author: Optional[Author]
-    created_at: Optional[datetime]
-    updated_at: Optional[datetime]
-
-    @validator("author")
-    def author_to_user_name_str(cls, author, values, **kwargs):
-        return author.name if not isinstance(author, str) else author
+class ListPost(AuthorBase, Post):
+    id: int
+    created_at: datetime
+    updated_at: datetime
 
 
-class Comment(BaseModel):
-    id: Optional[int]
-    post_id: Optional[int]
-    text: Optional[str]
-    author: Union[str, Author]
-    created_at: Optional[datetime]
+class Comment(AuthorBase, BaseModel):
+    id: int
+    text: str
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
         orm_mode = True
 
-    @validator("author")
-    def author_to_user_name_str(cls, v, values, **kwargs):
-        return v.name if not isinstance(v, str) else v
+
+class CreateComment(AuthorBase, BaseModel):
+    parent_id: Optional[int]
+    text: str
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "author": "author",
+                "text": "Very Nice",
+            }
+        }
 
 
-class CreateComment(BaseModel):
-    parent_id: Union[int, None] = None
-    text: Optional[str]
-    author: Union[str, Author]
-
-    @validator("author")
-    def author_to_user_name_str(cls, v, values, **kwargs):
-        return v.name if not isinstance(v, str) else v
-
-
-class ListComment(BaseModel):
-    id: Optional[int]
-    depth: Optional[int]
-    text: Optional[str]
-    author: Union[str, Author]
-    created_at: Optional[datetime]
+class ListComment(Comment):
+    parent_id: int
+    depth: int
 
     class Config:
         orm_mode = True
-
-    @validator("author")
-    def author_to_user_name_str(cls, v, values, **kwargs):
-        return v.name if not isinstance(v, str) else v
