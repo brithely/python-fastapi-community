@@ -1,4 +1,5 @@
 import abc
+from datetime import datetime
 
 from app.community.adapters import orm
 from app.community.domain import model
@@ -43,7 +44,7 @@ class PostRepository(AuthorMixin, AbstractRepository):
         query = self.session.query(orm.Post).join(orm.Post.author)
         if q:
             query = query.filter(
-                (orm.Post.user_name.like(f"%{q}%")) | orm.Post.title.like(f"%{q}%")
+                (orm.Author.name.like(f"%{q}%")) | orm.Post.title.like(f"%{q}%")
             )
         if page_limit:
             query = query.limit(page_limit)
@@ -62,12 +63,13 @@ class PostRepository(AuthorMixin, AbstractRepository):
 
     def update(self, post_id: int, post: model.UpdatePost):
         self.session.query(orm.Post).filter(orm.Post.id == post_id).update(
-            post.dict(exclude={"password"})
+            post.dict(exclude={"password", "created_at"})
         )
         self.session.commit()
         return self.get(post_id)
 
     def delete(self, post_id: int):
+        self.session.query(orm.Comment).filter(orm.Comment.post_id == post_id).delete()
         self.session.query(orm.Post).filter(orm.Post.id == post_id).delete()
         self.session.commit()
         return None
