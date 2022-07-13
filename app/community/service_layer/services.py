@@ -27,7 +27,10 @@ class PostService:
         self._repo = repo
 
     def get(self, post_id):
-        return self._repo.get(post_id)
+        post = self._repo.get(post_id)
+        if not post:
+            raise exception.NotExistPost
+        return post
 
     def get_list(self, q, page, page_limit):
         """
