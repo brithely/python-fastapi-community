@@ -5,8 +5,16 @@ from app.community.endpoints import api
 description = """
 커뮤니티 앱 서버
 
+테이블 설명
+
 ## Author
-게시글 작성 시 
+게시글 및 댓글 작성 시 Author 테이블에 입력 (존재하는 경우에는 기존 id 사용)
+
+## Keyword
+게시글 및 댓글 작성 시 알람을 보낼 키워드
+
+## AuthorKeyword
+해당 키워드로 알람 설정이 되어있는 작성자 테이블
 
 ## Post
 게시글은 목록, 작성, 삭제, 수정이 가능합니다.
