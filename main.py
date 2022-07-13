@@ -15,6 +15,8 @@ description = """
 
 ## AuthorKeyword
 해당 키워드로 알람 설정이 되어있는 작성자 테이블
+키워드 더미데이터 test0 ~ test9 까지 존재
+알림 발송 시 print 메세지 출력
 
 ## Post
 게시글은 목록, 작성, 삭제, 수정이 가능합니다.
