@@ -50,13 +50,13 @@ class Keyword(Base):
     __tablename__ = "keyword"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    text = Column(String(1000), nullable=False)
+    text = Column(String(200), nullable=False, unique=True)
 
 
 class AuthorKeyword(Base):
     __tablename__ = "author_keyword"
     __table_args__ = (
-        UniqueConstraint("author_id", "keyword_id", name="author_keyword_unique"),
+        UniqueConstraint("author_id", "keyword_id", name="author_id_keyword_id_unique"),
     )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
