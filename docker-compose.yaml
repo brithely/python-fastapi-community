@@ -1,4 +1,4 @@
-version: "3"
+version: "3.8"
 
 
 services:
@@ -23,6 +23,7 @@ services:
 
   mysql:
     image: mysql:8.0.28
+    platform: linux/amd64
     environment:
       - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
       - MYSQL_DATABASE=${DB_DATABASE}
@@ -30,7 +31,7 @@ services:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
     ports:
-     - "33061:3306"
+     - "34061:3306"
     healthcheck:
       test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
       timeout: 10s
